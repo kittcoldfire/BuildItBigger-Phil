@@ -1,0 +1,59 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.2.3'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+task startService() {
+    dependsOn ':backend:appengineRun'
+}
+
+task connectedTest() {
+    dependsOn ':app:connectedAndroidTest'
+}
+
+task stopService() {
+    dependsOn ':backend:appengineStop'
+}
+
+connectedTest.mustRunAfter startService
+stopService.mustRunAfter connectedTest
+
+task RunAllTestTasks {
+
+    //a lot of this I found from
+    //https://github.com/ethankhall/AndroidComplexBuild/tree/master/AndroidTopProject
+    //Wasn't sure how to make sure that the first task was done to
+    //Also http://stackoverflow.com/questions/17536652/gradle-and-multi-project-structure
+    evaluationDependsOn ":backend"
+
+    //https://github.com/GoogleCloudPlatform/gradle-appengine-plugin
+    /*
+       This was really tricky to figure out, testing each task I could get them to work
+       but to figure out that we needed the dev server should run in the background
+       so that we could complete the rest of the checks was really tricky
+     */
+    project(":backend"){
+        appengine{
+            daemon true
+        }
+    }
+
+    dependsOn startService
+    dependsOn connectedTest
+    dependsOn stopService
+}
